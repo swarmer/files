@@ -1,0 +1,92 @@
+---
+- hosts: files
+
+  vars:
+    app_name: files
+    proxy_port: 8003
+
+  remote_user: root
+
+  tasks:
+    - name: build a zipball with the source
+      local_action: command ./build.py
+
+    - name: ensure required packages are at latest versions
+      apt: pkg={{ item }} state=latest
+      with_items:
+        - nginx
+        - python3-dev
+        - python3-pip
+        - git
+        - build-essential
+        - vim
+        - supervisor
+        - dtrx
+        - htop
+        - postgresql
+
+    - name: add a user
+      user: name={{ app_name }} shell=/bin/bash groups=sudo append=yes
+        createhome=yes state=present home=/home/{{ app_name }}
+
+    - name: add a public key for the new user
+      authorized_key: user={{ app_name }} key="{{ lookup('file', '/home/anton/.ssh/id_rsa.pub') }}"
+
+    - name: write the apache config file
+      template: src=nginx.cfg dest=/etc/nginx/sites-available/{{ app_name }}
+
+    - name: enable the nginx config
+      file: src=/etc/nginx/sites-available/{{ app_name }}
+        dest=/etc/nginx/sites-enabled/{{ app_name }} state=link
+      notify:
+        - restart nginx
+
+    - name: ensure nginx is running
+      service: name=nginx state=started
+
+    - name: write the supervisor config file
+      template: src=supervisor.cfg dest=/etc/supervisor/conf.d/{{ app_name }}.conf
+
+    - name: load the app supervisor config
+      supervisorctl: name={{ app_name }} state=present
+
+    # start deploying the app
+    - name: stop the app
+      supervisorctl: name={{ app_name }} state=stopped
+
+    - name: delete the app dir
+      file: path=/home/{{ app_name }}/{{ app_name }} state=absent
+
+    - name: download the code
+      remote_user: "{{ app_name }}"
+      unarchive: src=../{{ app_name }}.zip dest=/home/{{ app_name }}/
+
+    - name: install virtualenv
+      command: pip3 install virtualenv
+
+    - name: create virtualenv
+      remote_user: "{{ app_name }}"
+      command: virtualenv venv
+      args:
+        chdir: /home/{{ app_name }}/{{ app_name }}/
+
+    - name: install required python packages
+      remote_user: "{{ app_name }}"
+      shell: /home/{{ app_name }}/{{ app_name }}/venv/bin/pip install -r requirements.txt
+      args:
+        chdir: /home/{{ app_name }}/{{ app_name }}/
+
+    - name: write the run script
+      remote_user: "{{ app_name }}"
+      template: src=run.sh dest=/home/{{ app_name }}/run.sh
+
+    - name: make the run script executable
+      remote_user: "{{ app_name }}"
+      file: path=/home/{{ app_name }}/run.sh mode=0775
+
+    - name: start the app
+      supervisorctl: name={{ app_name }} state=started
+
+  handlers:
+    - name: restart nginx
+      service: name=nginx state=restarted
