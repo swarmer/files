@@ -24,7 +24,7 @@
         - dtrx
         - htop
         - postgresql
-        - postgresql-server-dev
+        - postgresql-server-dev-9.3
 
     - name: add a user
       user: name={{ app_name }} shell=/bin/bash groups=sudo append=yes
