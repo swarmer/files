@@ -8,6 +8,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/dev/ref/settings/
 """
 
+import socket
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -20,11 +22,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 SECRET_KEY = 'n4k+i6&sp9%)5thl!#5pfd#htmp+8**=ken+*w*kj4sa_^0mnn'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', True)
 
-TEMPLATE_DEBUG = True
+TEMPLATE_DEBUG = DEBUG
 
-ALLOWED_HOSTS = []
+if 'HOST' in os.environ:
+    ALLOWED_HOSTS = ['files.%s' % socket.gethostname()]
+else:
+    ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -57,11 +62,21 @@ WSGI_APPLICATION = 'files.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
 
-DATABASES = {
-    'default': {
+if DEBUG:
+    db = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
+else:
+    db = {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'HOST': '',
+        'NAME': 'files',
+        'USER': 'files',
+    }
+
+DATABASES = {
+    'default': db
 }
 
 # Internationalization
@@ -87,4 +102,7 @@ STATIC_URL = '/static/'
 # Media files
 
 MEDIA_URL = '/f/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+if DEBUG:
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+else:
+    MEDIA_ROOT = os.environ['MEDIA_ROOT']

@@ -76,6 +76,9 @@
       args:
         chdir: /home/{{ app_name }}/{{ app_name }}/
 
+    - name: setup the database
+      postgresql_user: name={{ app_name }} role_attr_flags=SUPERUSER
+
     - name: write the run script
       remote_user: "{{ app_name }}"
       template: src=run.sh dest=/home/{{ app_name }}/run.sh
