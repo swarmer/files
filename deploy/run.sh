@@ -1,8 +1,5 @@
 #!/bin/sh
-cd /home/{{ app_name }}/{{ app_name }}
-. venv/bin/activate
-./manage.py migrate
+. /home/{{ app_name }}/env.sh
 
-export DEBUG=False
-export MEDIA_ROOT=/home/{{ app_name }}/media/
+cd /home/{{ app_name }}/{{ app_name }}
 exec gunicorn -b :{{ proxy_port }} {{ app_name }}.wsgi:application

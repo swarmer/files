@@ -18,18 +18,22 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/dev/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'n4k+i6&sp9%)5thl!#5pfd#htmp+8**=ken+*w*kj4sa_^0mnn'
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', True)
+DEBUG = os.environ.get('DEBUG', '1') == '1'
+
+# SECURITY WARNING: keep the secret key used in production secret!
+if DEBUG:
+    SECRET_KEY = 'n4k+i6&sp9%)5thl!#5pfd#htmp+8**=ken+*w*kj4sa_^0mnn'
+else:
+    with open(os.path.join(BASE_DIR, '..', 'key')) as key_file:
+        SECRET_KEY = key_file.read()
 
 TEMPLATE_DEBUG = DEBUG
 
-if 'HOST' in os.environ:
-    ALLOWED_HOSTS = ['files.%s' % socket.gethostname()]
-else:
+if DEBUG:
     ALLOWED_HOSTS = []
+else:
+    ALLOWED_HOSTS = ['files.%s' % socket.gethostname()]
 
 
 # Application definition
@@ -97,6 +101,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/dev/howto/static-files/
 
 STATIC_URL = '/static/'
+if not DEBUG:
+    STATIC_ROOT = os.environ['STATIC_ROOT']
 
 
 # Media files
