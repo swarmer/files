@@ -24,6 +24,7 @@
         - dtrx
         - htop
         - postgresql
+        - postgresql-server-dev
 
     - name: add a user
       user: name={{ app_name }} shell=/bin/bash groups=sudo append=yes
