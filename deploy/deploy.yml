@@ -13,7 +13,9 @@
 
   tasks:
     - name: build a zipball with the source
-      local_action: command ./build.py
+      local_action: command deployment/build.sh
+      args:
+        chdir: ..
 
     - name: ensure required packages are at latest versions
       apt: pkg={{ item }} state=latest
@@ -36,7 +38,7 @@
         createhome=yes state=present home=/home/{{ app_name }}
 
     - name: add a public key for the new user
-      authorized_key: user={{ app_name }} key="{{ lookup('file', '/home/anton/.ssh/id_rsa.pub') }}"
+      authorized_key: user={{ app_name }} key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 
     - name: write the apache config file
       template: src=nginx.cfg dest=/etc/nginx/sites-available/{{ app_name }}
@@ -44,8 +46,9 @@
     - name: enable the nginx config
       file: src=/etc/nginx/sites-available/{{ app_name }}
         dest=/etc/nginx/sites-enabled/{{ app_name }} state=link
-      notify:
-        - restart nginx
+
+    - name: restart nginx
+      service: name=nginx state=restarted
 
     - name: ensure nginx is running
       service: name=nginx state=started
@@ -105,13 +108,6 @@
         chdir: /home/{{ app_name }}/{{ app_name }}/
       environment: production
 
-    - name: Collect static files to be served by nginx
-      remote_user: "{{ app_name }}"
-      shell: /home/{{ app_name }}/{{ app_name }}/venv/bin/python manage.py collectstatic --noinput
-      args:
-        chdir: /home/{{ app_name }}/{{ app_name }}/
-      environment: production
-
     - name: write the env script
       remote_user: "{{ app_name }}"
       template: src=env.sh dest=/home/{{ app_name }}/env.sh
@@ -124,9 +120,20 @@
       remote_user: "{{ app_name }}"
       file: path=/home/{{ app_name }}/run.sh mode=0775
 
+    - name: Create static directory
+      remote_user: "{{ app_name }}"
+      file: path=/home/{{ app_name }}/static state=directory
+
+    - name: Create media directory
+      remote_user: "{{ app_name }}"
+      file: path=/home/{{ app_name }}/media state=directory
+
+    - name: Collect static files to be served by nginx
+      remote_user: "{{ app_name }}"
+      shell: /home/{{ app_name }}/{{ app_name }}/venv/bin/python manage.py collectstatic --noinput
+      args:
+        chdir: /home/{{ app_name }}/{{ app_name }}/
+      environment: production
+
     - name: start the app
       supervisorctl: name={{ app_name }} state=started
-
-  handlers:
-    - name: restart nginx
-      service: name=nginx state=restarted
