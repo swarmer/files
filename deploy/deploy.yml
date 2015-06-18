@@ -13,7 +13,7 @@
 
   tasks:
     - name: build a zipball with the source
-      local_action: command deployment/build.sh
+      local_action: command deploy/build.sh
       args:
         chdir: ..
 
