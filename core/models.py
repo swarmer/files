@@ -8,8 +8,7 @@ from django.core.validators import RegexValidator
 
 
 def get_path(upload, orig_name):
-    name = upload.url_name or orig_name
-    return name
+    return upload.url_name
 
 class FileUpload(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, default=None)
@@ -19,7 +18,7 @@ class FileUpload(models.Model):
         unique=True,
         validators=[
             RegexValidator(
-                regex='^[a-zA-Z0-9\-_\.]+$',
+                regex='^[a-zA-Z0-9\-_][a-zA-Z0-9\-_\.]*$',
                 message='Allowed characters are: latin letters, digits, .-_'
             )
         ]
