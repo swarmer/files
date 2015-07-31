@@ -13,7 +13,7 @@ def get_path(upload, orig_name):
 class FileUpload(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, default=None)
     file = models.FileField(upload_to=get_path)
-    url_name = models.CharField(max_length=1000, unique=True)
+    url_name = models.SlugField(max_length=1000, unique=True)
 
     def __str__(self):
         return self.url_name
