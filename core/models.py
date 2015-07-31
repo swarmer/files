@@ -11,6 +11,7 @@ def get_path(upload, orig_name):
     return name
 
 class FileUpload(models.Model):
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, default=None)
     file = models.FileField(upload_to=get_path)
     url_name = models.CharField(max_length=1000, unique=True)
 
