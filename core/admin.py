@@ -4,7 +4,8 @@ from .models import FileUpload
 
 
 class FileUploadAdmin(admin.ModelAdmin):
-    readonly_fields = ['owner']
+    def get_changeform_initial_data(self, request):
+        return {'owner': request.user}
 
     def get_fields(self, request, obj=None):
         if request.user.is_superuser:
@@ -14,7 +15,7 @@ class FileUploadAdmin(admin.ModelAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
-            return self.readonly_fields + ['file', 'url_name']
+            return self.readonly_fields + ('file', 'url_name')
         return self.readonly_fields
 
     def has_change_permission(self, request, obj=None):
