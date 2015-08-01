@@ -25,7 +25,7 @@ class FileUpload(models.Model):
     )
 
     def __str__(self):
-        return self.url_name
+        return "<File '%s'>" % self.url_name
 
 
 @receiver(post_delete, sender=FileUpload)
